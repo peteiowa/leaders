@@ -6,6 +6,27 @@ from datetime import datetime, timedelta
 
 from selenium import webdriver
 
+class URLImportance:
+    def __init__(self, url, weight,button):
+        self.url = url
+        self.weight = weight
+        self.buttonName = button
+    def visitTime(self):
+        return random.randint(2*self.weight, 3*self.weight) 
+    
+    def openUrl(self,driver):
+        if self.buttonName:         
+            button = driver.find_element('link text',self.buttonName)
+            if button:
+                button.click()
+            else:
+                driver.get(self.url)  
+        else:
+            driver.get(self.url)  
+            
+        time.sleep(self.visitTime()) 
+    
+
 class TimerApp:
     def __init__(self, root):
         self.root = root
@@ -112,23 +133,58 @@ class TimerApp:
             # options.add_argument('--ignore-certificate-errors')
             options.add_argument("--incognito")
             options.add_experimental_option('excludeSwitches', ['enable-logging'])
+            startUrl = "https://equalleadership.eu"
             urls = [
-                "https://equalleadership.eu",
-                "https://equalleadership.eu/news",
-                "https://equalleadership.eu/about"
+                URLImportance("https://equalleadership.eu/news",10, 'News'),
+                URLImportance("https://equalleadership.eu/about",20, 'About'),
+                URLImportance("https://equalleadership.eu/outputs/",10,'Outputs'),
+                URLImportance("https://equalleadership.eu/partners/",15,'Partners'),
+                URLImportance("https://equalleadership.eu/dissemination-area/",5, 'Dissemination Area'),
             ]
-            url = random.choice(urls)
-            driver = webdriver.Chrome(options=options)
-            driver.get(url)    
-           
             
-            self.visit_counter=self.visit_counter+1
+            newsUrl = [
+                URLImportance("https://equalleadership.eu/transnational-partners-meeting-a-coruna/",13,False),
+                URLImportance("https://equalleadership.eu/transnational-meeting-florence/",11,False),
+                URLImportance("https://equalleadership.eu/kick-off-meeting-lisbon/",9,False),
+                URLImportance("https://equalleadership.eu/we-open-the-equal-leadership-project-website/",10,False),
+            ]
+                     
+           
+            driver = webdriver.Chrome(options=options)
+            driver.get(startUrl) 
+                
             self.visit_counter_label.config(text=f"Visits counter: {int(self.visit_counter)}")
             next_visit_time = self.prepare_next_visit_time()
-            time.sleep(4) # Let the user actually see something!
-            driver.quit()
+            self.visit_counter=self.visit_counter+1
             
-
+            # visiting paths
+            startTime = random.randint(10, 20)
+            time.sleep(startTime) # Let the user actually see something!
+            selectedUrl = random.choice(urls)
+            # news path
+            if selectedUrl.url.endswith('news'):
+                while newsUrl:
+                    # open news url
+                    selectedUrl.openUrl(driver)
+                    
+                    # Visit all news url in random order
+                    # Shuffle the list
+                    random.shuffle(newsUrl)
+                    # Select and remove one random item from the list
+                    randomNews = newsUrl.pop()
+                    
+                    driver.get(randomNews.url)
+                    
+                    time.sleep(randomNews.visitTime())           
+            else:
+                while urls:
+                    random.shuffle(urls)
+                    # Select and remove one random item from the list
+                    randomUrl = urls.pop()
+                    randomUrl.openUrl(driver)
+                  
+                    
+            driver.quit()    
             self.root.after(next_visit_time,self.launchBrowser)
                          
 
